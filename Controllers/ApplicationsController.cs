@@ -51,7 +51,7 @@ public class ApplicationsController : ControllerBase {
 
     [HttpPost("{id}")]
     public Application Create(string id, JsonElement json) {
-        var data = (Dictionary<string, object>) Json.Deserialize(json.ToString());
+        var data = Json.Deserialize<Dictionary<string, object>>(json.ToString());
         var user = this.Auth("createApplications");
         var template = TemplateRepository.FindById(id, user.StudyPlaceID)!;
 

@@ -22,7 +22,7 @@ public static class TemplateRepository {
             .Select(v => v.Preview());
     }
 
-    public static void Delete(string id) {
-        Database.TemplatesCollection.DeleteOne(v => v.Id == id);
+    public static void Delete(string id, string studyPlaceId) {
+        Database.TemplatesCollection.DeleteOne(v => v.Id == id && v.StudyPlaceID == studyPlaceId);
     }
 }
