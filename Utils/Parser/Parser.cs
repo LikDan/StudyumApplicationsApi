@@ -90,7 +90,7 @@ public partial class Parser {
         RecursiveEach(Html.DocumentNode.ChildNodes, LoopTag, n => {
             var arrayName = n.GetAttributeValue(LoopArrayAttr, null);
             if (arrayName == null || arrayName.Length < 3) return;
-            arrayName = arrayName.Substring(1, arrayName.Length - 2);
+            arrayName = arrayName.Substring(2, arrayName.Length - 4);
 
             var array = Context.GetByName(arrayName);
 
@@ -103,11 +103,11 @@ public partial class Parser {
             for (var i = ParserContext.GetArrayLength(array) - 1; i >= 0; i--) {
                 var replacementIndex = indexVarName == null
                     ? null
-                    : new ReplacementValue($"{{{indexVarName}}}", i.ToString());
+                    : new ReplacementValue($"{{{{{indexVarName}}}}}", i.ToString());
                 var replacementValue =
                     valueVarName == null
                         ? null
-                        : new ReplacementValue($"{{{valueVarName}", $"{{{arrayName}[{i.ToString()}]");
+                        : new ReplacementValue($"{{{{{valueVarName}}}}}", $"{{{{{arrayName}[{i.ToString()}]}}}}");
 
                 foreach (var node in children.Select(t => t.Clone()).Reverse()) {
                     ParseLoop(node, replacementIndex, replacementValue);
@@ -136,7 +136,7 @@ public partial class Parser {
         if (condition == null) return false;
 
         var regex = VariableRegex();
-        var res = regex.Replace(condition, match => Context.GetStringByName(match.Value[1..^1]).ToString());
+        var res = regex.Replace(condition, match => Context.GetStringByName(match.Value[2..^2]).ToString());
 
         return CSharpScript.EvaluateAsync<bool>(res).Result;
     }

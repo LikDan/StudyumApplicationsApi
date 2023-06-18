@@ -51,7 +51,8 @@ public class ApplicationsController : ControllerBase {
 
     [HttpPost("{id}")]
     public Application Create(string id, JsonElement json) {
-        var data = Json.Deserialize<Dictionary<string, object>>(json.ToString());
+        var dataObject = Json.Deserialize(json.ToString());
+        var data = (Dictionary<string, object>)dataObject;
         var user = this.Auth("createApplications");
         var template = TemplateRepository.FindById(id, user.StudyPlaceID)!;
 
@@ -59,11 +60,11 @@ public class ApplicationsController : ControllerBase {
         validator.MustValidate(data);
         
         var html = Parser.InstantParse(template.Template, data, template.Timeout);
-        
         var cdnEntry = Http.Store(Pdf.FromHtml(html));
         var application = new Application {
             UserID = user.Id,
             TemplateID = template.Id,
+            StudyPlaceID = user.StudyPlaceID,
             Html = html,
             Data = data,
             CdnEntry = cdnEntry,
