@@ -14,7 +14,7 @@ public static class Json {
 
     public static string Serialize<T>(T obj) => JsonConvert.SerializeObject(obj, Settings);
 
-    private static object ParseValue(object obj) {
+    public static object ParseValue(object obj) {
         return obj switch {
             JArray jArray => jArray.ToObject<object[]>()!.Select(ParseValue).ToArray(),
             JObject jObject => jObject.ToObject<Dictionary<string, object>>()!

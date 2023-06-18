@@ -14,5 +14,8 @@ public static class Database {
 
     public static IMongoCollection<ApplicationTemplate> TemplatesCollection =>
         Db.GetCollection<ApplicationTemplate>("Templates");
+
+    public static IMongoCollection<Application> ApplicationsCollection =>
+        Db.GetCollection<Application>("Applications");
     
 }

@@ -1,14 +1,14 @@
+using System.Text.Json;
 using ApplicationsApi.Middlewares;
 using ApplicationsApi.Models;
-using ApplicationsApi.Proto;
 using ApplicationsApi.Repository;
+using ApplicationsApi.Utils;
 using ApplicationsApi.Utils.Converters.Serializers;
 using ApplicationsApi.Utils.Parser;
 using ApplicationsApi.Utils.Validators;
 using ApplicationsApi.Utils.Validators.Utils;
 using ApplicationsApi.Utils.Websockets;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
 using TimeoutException = ApplicationsApi.Utils.Parser.Utils.TimeoutException;
 
 namespace ApplicationsApi.Controllers;
@@ -16,23 +16,10 @@ namespace ApplicationsApi.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class ApplicationsController : ControllerBase {
-    [HttpGet]
-    public IEnumerable<ApplicationTemplatePreview> Index() {
-        var user = this.Auth();
-        return Database.TemplatesCollection
-            .Find(t => t.StudyPlaceID == user.StudyPlaceID)
-            .ToEnumerable()
-            .Select(v => v.Preview());
-    }
-
-    [HttpGet("{id}")]
-    public ApplicationTemplate Show(string id) {
-        return Database.TemplatesCollection.Find(t => t.Id == id).First();
-    }
-
     [HttpGet("{id}/[action]")]
     public void Preview(string id) {
-        var template = TemplateRepository.FindById(id);
+        var user = this.Auth("createApplications");
+        var template = TemplateRepository.FindById(id, user.StudyPlaceID)!;
 
         IWebsocket<object, object> simpleTextWebSocket =
             new HttpWebSocket<object>(HttpContext, new JsonByteSerializer<object>());
@@ -44,9 +31,9 @@ public class ApplicationsController : ControllerBase {
             ApplicationPreview preview;
 
             try {
-                var task = Parser.InstantParse(template.Template, msg, template.Timeout);
+                var html = Parser.InstantParse(template.Template, msg, template.Timeout);
                 preview = new ApplicationPreview {
-                    Html = task,
+                    Html = html,
                     Errors = error == null ? null : new[] { error }
                 };
             }
@@ -60,5 +47,40 @@ public class ApplicationsController : ControllerBase {
         };
 
         simpleTextWebSocket.StartReceiving();
+    }
+
+    [HttpPost("{id}")]
+    public Application Create(string id, JsonElement json) {
+        var data = (Dictionary<string, object>) Json.Deserialize(json.ToString());
+        var user = this.Auth("createApplications");
+        var template = TemplateRepository.FindById(id, user.StudyPlaceID)!;
+
+        var validator = new InputValidator(template.Scheme);
+        validator.MustValidate(data);
+        
+        var html = Parser.InstantParse(template.Template, data, template.Timeout);
+        
+        var cdnEntry = Http.Store(Pdf.FromHtml(html));
+        var application = new Application {
+            UserID = user.Id,
+            TemplateID = template.Id,
+            Html = html,
+            Data = data,
+            CdnEntry = cdnEntry,
+        };
+        ApplicationsRepository.Create(application);
+        return application;
+    }
+    
+    [HttpGet]
+    public IEnumerable<Application> GetUsersApplications() {
+        var user = this.Auth("createApplications");
+        return ApplicationsRepository.List(user.StudyPlaceID, user.Id);
+    }
+    
+    [HttpGet("all")]
+    public IEnumerable<Application> GetAllApplications() {
+        var user = this.Auth("manageApplicationsTemplates");
+        return ApplicationsRepository.List(user.StudyPlaceID);
     }
 }
