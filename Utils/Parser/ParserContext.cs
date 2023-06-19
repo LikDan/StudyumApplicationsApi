@@ -1,5 +1,5 @@
 using System.Collections;
-using ApplicationsApi.Models;
+using ApplicationsApi.Controllers;
 using ApplicationsApi.Proto;
 
 namespace ApplicationsApi.Utils.Parser;
@@ -13,15 +13,15 @@ public class ParserContext {
     public DateTime Datetime => new();
 
     public StudyPlace StudyPlace => _studyPlace ?? LoadStudyPlace();
-    public User User => _user ?? LoadUser();
+    public User User { get; set; }
 
     public object Input;
 
-    public ParserContext(string inputJSON): this(Json.Deserialize(inputJSON)) {
-    }
+    public ParserContext(string inputJSON, User user) : this(Json.Deserialize(inputJSON), user) { }
 
-    public ParserContext(object input) {
+    public ParserContext(object input, User user) {
         Input = input;
+        User = user;
     }
 
     public object? GetByName(string name) {
@@ -56,23 +56,12 @@ public class ParserContext {
     }
 
     private StudyPlace LoadStudyPlace() {
-        //todo on error throw new Exception("Cannot load study place");
-        _studyPlace = new StudyPlace {
-            Name = "TestName"
-        };
+        _studyPlace = StudyPlacesController.StudyPlace(User.StudyPlaceID);
         return _studyPlace;
     }
-
-    private User LoadUser() {
-        _user = new User {
-            Name = "TestName"
-        };
-        return _user;
-    }
-
+    
     private StudyPlace? _studyPlace;
-    private User? _user;
-
+    
     public static int GetArrayLength(object? array) {
         return ((IEnumerable<object>)array!).Count();
     }

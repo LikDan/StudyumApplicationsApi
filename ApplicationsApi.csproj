@@ -26,6 +26,7 @@
     
     <ItemGroup>
         <Protobuf Include="Grpc\auth\auth.proto" />
+        <Protobuf Include="Grpc\studyPlaces\studyPlaces.proto" />
     </ItemGroup>
     
     <ItemGroup>

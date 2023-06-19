@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using ApplicationsApi.Proto;
 using HtmlAgilityPack;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using TimeoutException = ApplicationsApi.Utils.Parser.Utils.TimeoutException;
@@ -7,13 +8,15 @@ namespace ApplicationsApi.Utils.Parser;
 
 public partial class Parser {
     public int Timeout { get; set; }
-    
+
     private HtmlDocument Html { get; }
     private ParserContext Context { get; }
 
-    public Parser(string html, string input, int timeout = -1) : this(html, new ParserContext(input), timeout) { }
+    public Parser(string html, string input, User user, int timeout = -1) :
+        this(html, new ParserContext(input, user), timeout) { }
 
-    public Parser(string html, object input, int timeout = -1) : this(html, new ParserContext(input), timeout) { }
+    public Parser(string html, object input, User user, int timeout = -1) :
+        this(html, new ParserContext(input, user), timeout) { }
 
     public Parser(string html, ParserContext context, int timeout = -1) {
         Html = new HtmlDocument();
@@ -205,15 +208,15 @@ public partial class Parser {
     private const string LoopIndexAttr = "index";
     private const string LoopValueAttr = "value";
 
-    public static string InstantParse(string html, string input, int timeout = -1) {
-        var parser = new Parser(html, input, timeout);
+    public static string InstantParse(string html, string input, User user, int timeout = -1) {
+        var parser = new Parser(html, input, user, timeout);
         parser.Parse();
         parser.Trim();
         return parser.ToString();
     }
 
-    public static string InstantParse(string html, object input, int timeout = -1) {
-        var parser = new Parser(html, input, timeout);
+    public static string InstantParse(string html, object input, User user, int timeout = -1) {
+        var parser = new Parser(html, input, user, timeout);
         parser.Parse();
         parser.Trim();
         return parser.ToString();

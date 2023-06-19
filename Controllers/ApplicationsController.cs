@@ -31,7 +31,7 @@ public class ApplicationsController : ControllerBase {
             ApplicationPreview preview;
 
             try {
-                var html = Parser.InstantParse(template.Template, msg, template.Timeout);
+                var html = Parser.InstantParse(template.Template, msg, user, template.Timeout);
                 preview = new ApplicationPreview {
                     Html = html,
                     Errors = error == null ? null : new[] { error }
@@ -58,8 +58,8 @@ public class ApplicationsController : ControllerBase {
 
         var validator = new InputValidator(template.Scheme);
         validator.MustValidate(data);
-        
-        var html = Parser.InstantParse(template.Template, data, template.Timeout);
+
+        var html = Parser.InstantParse(template.Template, data, user, template.Timeout);
         var cdnEntry = Http.Store(Pdf.FromHtml(html));
         var application = new Application {
             UserID = user.Id,
@@ -72,13 +72,13 @@ public class ApplicationsController : ControllerBase {
         ApplicationsRepository.Create(application);
         return application;
     }
-    
+
     [HttpGet]
     public IEnumerable<Application> GetUsersApplications() {
         var user = this.Auth("createApplications");
         return ApplicationsRepository.List(user.StudyPlaceID, user.Id);
     }
-    
+
     [HttpGet("all")]
     public IEnumerable<Application> GetAllApplications() {
         var user = this.Auth("manageApplicationsTemplates");
