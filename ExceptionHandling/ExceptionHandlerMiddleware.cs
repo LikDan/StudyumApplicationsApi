@@ -1,5 +1,7 @@
 using System.Net;
 using ApplicationsApi.Utils.Validators.Utils;
+using Grpc.Core;
+using TimeoutException = ApplicationsApi.Utils.Parser.Utils.TimeoutException;
 
 namespace ApplicationsApi.ExceptionHandling;
 
@@ -9,8 +11,34 @@ public class ExceptionHandlerMiddleware : IMiddleware {
             try {
                 await next(context);
             }
+            catch (RpcException e) {
+                var code = e.StatusCode switch {
+                    StatusCode.OK => HttpStatusCode.OK,
+                    StatusCode.Cancelled => HttpStatusCode.BadRequest,
+                    StatusCode.Unknown => HttpStatusCode.InternalServerError,
+                    StatusCode.InvalidArgument => HttpStatusCode.BadRequest,
+                    StatusCode.DeadlineExceeded => HttpStatusCode.GatewayTimeout,
+                    StatusCode.NotFound => HttpStatusCode.NotFound,
+                    StatusCode.AlreadyExists => HttpStatusCode.Conflict,
+                    StatusCode.PermissionDenied => HttpStatusCode.Forbidden,
+                    StatusCode.Unauthenticated => HttpStatusCode.Unauthorized,
+                    StatusCode.ResourceExhausted => HttpStatusCode.ServiceUnavailable,
+                    StatusCode.FailedPrecondition => HttpStatusCode.BadRequest,
+                    StatusCode.Aborted => HttpStatusCode.Conflict,
+                    StatusCode.OutOfRange => HttpStatusCode.BadRequest,
+                    StatusCode.Unimplemented => HttpStatusCode.NotImplemented,
+                    StatusCode.Internal => HttpStatusCode.InternalServerError,
+                    StatusCode.Unavailable => HttpStatusCode.ServiceUnavailable,
+                    StatusCode.DataLoss => HttpStatusCode.InternalServerError,
+                    _ => HttpStatusCode.InternalServerError
+                };
+                throw new HttpException(e.Status.Detail, code);
+            }
             catch (ValidationException e) {
                 throw new HttpException(e.Message, HttpStatusCode.UnprocessableEntity);
+            }
+            catch (TimeoutException e) {
+                throw new HttpException(e.Message, HttpStatusCode.RequestTimeout);
             }
             catch (Exception e) {
                 Console.WriteLine(e.GetType().ToString());
