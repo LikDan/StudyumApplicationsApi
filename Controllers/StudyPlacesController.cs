@@ -1,3 +1,5 @@
+using ApplicationsApi.Proto;
+
 namespace ApplicationsApi.Controllers;
 
 using Grpc.Net.Client;

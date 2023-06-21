@@ -14,7 +14,6 @@ public class UserController {
             },
             RequiredPermissions = { permissions }
         });
-        if (!response.HasRequiredPermissions) throw new Exception("no permission");
         return response.User;
     }
 }
