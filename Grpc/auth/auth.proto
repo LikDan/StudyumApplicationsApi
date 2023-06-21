@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 option csharp_namespace = "ApplicationsApi.Proto";
+option go_package = "./protoauth";
 
 service Auth {
   rpc AuthUser(AuthRequest) returns (AuthResponse) {}
@@ -12,7 +13,6 @@ message AuthRequest {
 }
 
 message AuthResponse {
-  bool hasRequiredPermissions = 1;
   User user = 2;
   bool update = 3;
   JWT jwt = 4;
